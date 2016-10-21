@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>点餐系统</title>
+<script type="text/javascript" src="/public/javascripts/jquery-1.9.0.min.js">
+
+</script>
+<style type="text/css">
+#containner{
+width:300px;
+background: #eee;
+padding:5px 5px;
+}
+label{display: block;cursor: pointer;margin:10px;5px;font-size:15px;}
+.title{text-align: center;font-size:18px;font-weight: bold}
+.item{font-size:15px;position:absolute;}
+.item input{width:120px;}
+</style>
+</head>
+<body>
+<div id="containner">
+<p class="title">菜单</p>
+
+</div>
+<div  style="position:relative;text-align: left;width:300px;margin:5px;">
+<p class="item">桌位号：<input type="text" id="table" placeholder="请输入您的桌号！"/></p>
+<button id="sendOrder" type="button" style="float:right;width:60px;height:25px;margin:10px 5px;padding:5px 5px;">点 餐</button>
+</div>
+</body>
+<script type="text/javascript">
+$.get("/foods",function(json){
+$(json).each(function(index){
+	var id="food_"+index;
+	var $label=$("<label>").attr("for",id);
+	var $span=$("<span>");
+		$span.text(this.name+" ￥"+this.price);
+	var $input =$("<input type='checkbox' name='food' value='"+this.foodId+"' id='"+id+"'>");
+	 $label.append($input).append($span);
+	
+	$("#containner").append($label);
+});
+},"json");
+
+$(function(){
+	var wsUri ="ws://localhost:9000/socket"; 
+	websocket = new WebSocket(wsUri); 
+	 websocket.onopen = function(evt) { 
+	    	websocket.send("login#000");//客户
+	    }; 
+	$("#sendOrder").on("click",function(){
+			var table=$("#table").val();	
+			var foodIds=[];
+			$("input[name='food']:checked").each(function(){
+				foodIds.push(this.value);
+			});
+			if(foodIds.length==0){
+				alert("请点菜！");return;
+			}
+			if(!table){
+				alert("请填写桌位;");return;
+			}
+			var param={};
+			param.table=table;
+			param.foodIds=foodIds;
+			$.ajax({ 
+				type: "POST", 
+				contentType: "application/json", 
+				url: "/order", 
+				data: JSON.stringify(param), 
+				dataType: 'json', 
+				success: function(result) { 
+					
+					alert(result.message);//订单编号 
+					if(result.status==1){
+					    websocket.send(result.data); 
+					}
+				} 
+			});
+			
+	});	
+	
+});
+</script>
+</html>

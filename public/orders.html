@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>点餐系统</title>
+<script type="text/javascript" src="/public/javascripts/jquery-1.9.0.min.js">
+
+</script>
+<style type="text/css">
+#containner{
+width:600px;
+background: #eee;
+padding:5px 5px;
+}
+table{width:600px;border:1px solid #aaa;}
+table td{padding:5px 2px;text-align: center;}
+.time{float:right;}
+</style>
+</head>
+<body>
+<div id="containner">
+<p class="title">订单<span class="time"></span></p>
+<table border="1" >
+<thead>
+<tr>
+<td>订单号</td>
+<td>座位号</td>
+<td>菜品</td>
+<td>价格</td>
+<td>状态</td>
+<td>操作</td>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</body>
+<script type="text/javascript">
+$(function(){
+	$.post("/orders",function(json){
+		$(json).each(function(index){
+			var statusStr="";
+			switch(this.status){
+			case 0:statusStr="服务中";break;
+			case 1:statusStr="已结账";break;
+			case 2:statusStr="退单";break;
+			default:statusStr="";
+		}
+			var $tr=$("<tr>");
+			$tr.append(
+				$("<td>").text(this.orderId))
+				.append(
+				$("<td>").text(this.tableCode))
+				.append(
+				$("<td>").html(this.orderFood.map(function(temp){
+					return temp.name+" "+temp.price+"<br/>";
+				}))
+				)
+				.append(
+				$("<td>").text(this.totalPrice))
+				.append(
+				$("<td>").text(statusStr))
+				.append(
+				$("<td>").append($("<button>买单</button>")).append($("<button>退单</button>"))		
+				)
+			
+			$("#containner tbody").append($tr);
+		});
+		},"json");
+	
+	setInterval(function(){
+		$(".time").text(new Date())
+	},1000)
+	
+	//
+	var wsUri ="ws://localhost:9000/socket"; 
+	websocket = new WebSocket(wsUri); 
+//    websocket.send(message); 
+    websocket.onopen = function(evt) { 
+    	websocket.send("login#111");
+    }; 
+    websocket.onclose = function(evt) { 
+    }; 
+    websocket.onmessage = function(evt) { 
+       if(evt.data&&evt.data.match(/^\d+$/)){
+    	   var orderId=evt.data;
+    	   //根据接受到的ID去后台查找订单并加载
+    	   $.post("/perOrder?orderId="+orderId,function(json){
+    			var statusStr="";
+    			switch(json.status){
+    			case 0:statusStr="服务中";break;
+    			case 1:statusStr="已结账";break;
+    			case 2:statusStr="退单";break;
+    			default:statusStr="";
+    		}
+    			var $tr=$("<tr>");
+    			$tr.append(
+    				$("<td>").text(json.orderId))
+    				.append(
+    				$("<td>").text(json.tableCode))
+    				.append(
+    				$("<td>").html(json.orderFood.map(function(temp){
+    					return temp.name+" "+temp.price+"<br/>";
+    				}))
+    				)
+    				.append(
+    				$("<td>").text(json.totalPrice))
+    				.append(
+    				$("<td>").text(statusStr))
+    				.append(
+    				$("<td>").append($("<button>买单</button>")).append($("<button>退单</button>"))		
+    				)
+    			
+    			$("#containner tbody").append($tr);
+    	   },"json")
+    	   
+       } 
+    }; 
+    websocket.onerror = function(evt) { 
+    }; 
+});
+</script>
+</html>

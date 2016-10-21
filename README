@@ -1,0 +1,12 @@
+
+下单，后台查看小demo。运用play framework2.21,
+有三个表格 分别为 食物（food），订单（orderRecode）以及订单食物中间表（orderFood）；
+下单后能即时的显示到订单页面，运用到了play的websocket模块。
+
+订餐首页uri：/
+订单展示uri：/orders
+
+sql文件存放在sql文件夹里。	
+
+时间仓促，功能有限，请见谅。
+
